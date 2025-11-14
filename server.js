@@ -3,12 +3,27 @@ require('dotenv').config();
 const express     = require('express');
 const bodyParser  = require('body-parser');
 const cors        = require('cors');
-
+const mongoose = require('mongoose');
+const helmet = require('helmet');
 const apiRoutes         = require('./routes/api.js');
 const fccTestingRoutes  = require('./routes/fcctesting.js');
 const runner            = require('./test-runner');
 
 const app = express();
+
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"]
+    }
+  },
+  dnsPrefetchControl: { allow: false },
+  frameguard: { action: 'sameorigin' },
+  referrerPolicy: { policy: 'same-origin' }
+}));
 
 app.use('/public', express.static(process.cwd() + '/public'));
 
@@ -32,6 +47,12 @@ app.route('/')
   .get(function (req, res) {
     res.sendFile(process.cwd() + '/views/index.html');
   });
+
+mongoose.set('strictQuery', false);
+mongoose.connect(process.env.DB, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+});
 
 //For FCC testing purposes
 fccTestingRoutes(app);
